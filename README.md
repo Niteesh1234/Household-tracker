@@ -139,3 +139,29 @@ APP_ENV=development .venv/bin/python scripts/seed_demo_data.py
 ```
 
 Then refresh the frontend dashboard.
+
+## GitHub Actions
+
+This repository includes a first CI workflow:
+
+```text
+.github/workflows/ci.yml
+```
+
+It runs automatically on pushes and pull requests to `main`, `master`, `dev`, and `uat` branches.
+
+The workflow checks:
+
+- Backend Python dependencies and syntax
+- Frontend dependency install and production build
+
+Files used by GitHub Actions:
+
+```text
+backend/requirements.txt      # backend dependency install
+backend/app/                  # backend code syntax check
+backend/scripts/              # backend script syntax check
+frontend/package.json         # frontend scripts
+frontend/package-lock.json    # npm ci dependency lockfile
+frontend/src/                 # frontend source used by build
+```
