@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getDashboardAnalytics } from "../api/analyticsApi";
 import { ApiError } from "../api/http";
 import { BarList } from "../components/BarList";
+import { PieChart } from "../components/PieChart";
 import { SummaryCard } from "../components/SummaryCard";
 import { apiV1Url, frontendConfig } from "../config/environment";
 import type { DashboardAnalyticsResponse } from "../types/analytics";
@@ -67,6 +68,20 @@ export function DashboardPage() {
       meta: `${formatNumber(item.count)} record${item.count === 1 ? "" : "s"}`,
     })) ?? [];
 
+  const expensePieItems = expenseSpendItems.map((item) => ({
+    label: item.label,
+    value: item.value,
+    formattedValue: item.formattedValue,
+    meta: item.meta,
+  }));
+
+  const maintenancePieItems = maintenanceCostItems.map((item) => ({
+    label: item.label,
+    value: item.value,
+    formattedValue: item.formattedValue,
+    meta: item.meta,
+  }));
+
   return (
     <main className="app-shell">
       <section className="hero">
@@ -120,6 +135,23 @@ export function DashboardPage() {
               value={formatNumber(dashboard.maintenance_cost_by_asset_type.length)}
               helperText="Maintenance groups tracked"
               tone="orange"
+            />
+          </section>
+
+          <section className="pie-grid" aria-label="Dashboard pie charts">
+            <PieChart
+              title="Expense distribution"
+              centerLabel="Expenses"
+              centerValue={formatCurrency(dashboard.expenses.total_amount)}
+              emptyMessage="No expense distribution data yet. Add expenses to see this pie chart."
+              items={expensePieItems}
+            />
+            <PieChart
+              title="Maintenance distribution"
+              centerLabel="Maintenance"
+              centerValue={formatCurrency(dashboard.maintenance.total_cost)}
+              emptyMessage="No maintenance distribution data yet. Add maintenance records to see this pie chart."
+              items={maintenancePieItems}
             />
           </section>
 
