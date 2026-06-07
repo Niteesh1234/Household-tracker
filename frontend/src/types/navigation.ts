@@ -1,0 +1,1 @@
+export type AppView = "dashboard" | "categories" | "expenses" | "maintenance";

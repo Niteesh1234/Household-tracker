@@ -1,0 +1,1 @@
+"""Backend application package for the Household Maintenance Tracker API."""
