@@ -239,6 +239,7 @@ h2 {
 }
 
 .summary-grid,
+.pie-grid,
 .charts-grid,
 .tables-grid,
 .resource-grid {
@@ -251,6 +252,7 @@ h2 {
   margin-bottom: 18px;
 }
 
+.pie-grid,
 .charts-grid,
 .tables-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -367,6 +369,91 @@ h2 {
   display: block;
   margin-top: 6px;
   font-size: 0.82rem;
+}
+
+.pie-panel__content {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  align-items: center;
+  gap: 22px;
+}
+
+.pie-chart {
+  position: relative;
+  display: grid;
+  width: min(100%, 240px);
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 1px rgba(15, 23, 42, 0.08),
+    0 18px 38px rgba(15, 23, 42, 0.12);
+}
+
+.pie-chart::after {
+  position: absolute;
+  inset: 21%;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+  content: "";
+}
+
+.pie-chart__center {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 4px;
+  max-width: 58%;
+  text-align: center;
+}
+
+.pie-chart__center span {
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pie-chart__center strong {
+  color: #0f172a;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  letter-spacing: -0.04em;
+}
+
+.pie-legend {
+  display: grid;
+  gap: 11px;
+}
+
+.pie-legend__item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+}
+
+.pie-legend__swatch {
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.12);
+}
+
+.pie-legend__item strong {
+  display: block;
+  color: #334155;
+  font-size: 0.92rem;
+}
+
+.pie-legend__item small {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.35;
 }
 
 .table-wrap {
@@ -619,6 +706,7 @@ tr:last-child td {
   }
 
   .summary-grid,
+  .pie-grid,
   .charts-grid,
   .tables-grid,
   .resource-grid {
@@ -627,6 +715,15 @@ tr:last-child td {
 
   .resource-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pie-panel__content {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .pie-legend {
+    width: 100%;
   }
 }
 
@@ -655,6 +752,7 @@ tr:last-child td {
   }
 
   .summary-grid,
+  .pie-grid,
   .charts-grid,
   .tables-grid,
   .resource-grid,
