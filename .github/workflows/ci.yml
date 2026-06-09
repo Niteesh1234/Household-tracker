@@ -16,9 +16,48 @@ on:
   workflow_dispatch:
 
 jobs:
+  repo-hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check that secrets and generated files are not tracked
+        run: |
+          forbidden_files="$(git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.(dev|uat|prod|development|production)$|node_modules/|(^|/)dist/|\.tsbuildinfo$|frontend/vite\.config\.(js|d\.ts)$' || true)"
+
+          if [ -n "$forbidden_files" ]; then
+            echo "These files should not be committed:"
+            echo "$forbidden_files"
+            exit 1
+          fi
+
+          echo "Repository hygiene check passed."
+
   backend:
     name: Backend checks
     runs-on: ubuntu-latest
+    needs: repo-hygiene
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: development
+      MONGODB_URI: mongodb://localhost:27017
+      MONGODB_DATABASE: household_tracker_ci
+      MONGODB_SERVER_SELECTION_TIMEOUT_MS: "5000"
+      BACKEND_CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
 
     steps:
       - name: Checkout repository
@@ -35,13 +74,57 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Verify installed Python dependencies
+        working-directory: backend
+        run: pip check
+
       - name: Check backend Python syntax
         working-directory: backend
         run: python -m compileall app scripts
 
+      - name: Verify FastAPI app imports
+        working-directory: backend
+        run: |
+          python - <<'PY'
+          from app.main import app
+
+          print(f"Loaded FastAPI app: {app.title}")
+          PY
+
+      - name: Run demo seed script against CI MongoDB
+        working-directory: backend
+        run: python scripts/seed_demo_data.py
+
+      - name: Start backend and run API smoke checks
+        working-directory: backend
+        run: |
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/household-backend.log 2>&1 &
+          BACKEND_PID=$!
+          trap 'kill $BACKEND_PID || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/api/v1/health > /tmp/health.json; then
+              cat /tmp/health.json
+              break
+            fi
+
+            if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
+              echo "Backend process exited before becoming healthy. Logs:"
+              cat /tmp/household-backend.log
+              exit 1
+            fi
+
+            sleep 1
+          done
+
+          curl -fsS http://127.0.0.1:8000/api/v1/health
+          curl -fsS http://127.0.0.1:8000/api/v1/health/ready
+          curl -fsS http://127.0.0.1:8000/api/v1/analytics/dashboard | python -m json.tool
+
   frontend:
     name: Frontend build
     runs-on: ubuntu-latest
+    needs: repo-hygiene
 
     steps:
       - name: Checkout repository
@@ -58,6 +141,19 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Validate frontend environment examples
+        run: |
+          test -f frontend/.env.development.example
+          test -f frontend/.env.uat.example
+          test -f frontend/.env.production.example
+
       - name: Build frontend
         working-directory: frontend
         run: npm run build
+
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7

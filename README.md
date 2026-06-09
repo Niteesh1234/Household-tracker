@@ -152,8 +152,14 @@ It runs automatically on pushes and pull requests to `main`, `master`, `dev`, an
 
 The workflow checks:
 
-- Backend Python dependencies and syntax
+- Repository hygiene so real `.env` files, `node_modules`, `dist`, and TypeScript build cache files are not committed
+- Backend Python dependency install and dependency compatibility
+- Backend Python syntax
+- Backend FastAPI app import
+- Backend demo seed script against CI MongoDB
+- Backend health/readiness/dashboard smoke checks against CI MongoDB
 - Frontend dependency install and production build
+- Frontend build artifact upload
 
 Files used by GitHub Actions:
 
